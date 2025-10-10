@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Amigos Connection - Weekly Pairing System</title>
+    {% load static %}
+    <link rel="icon" href="{% static 'images/img.ico' %}" type="image/x-icon">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --amigos-purple: #8B5CF6;
+            --amigos-pink: #EC4899;
+            --amigos-blue: #06B6D4;
+            --amigos-dark: #0F0F23;
+            --amigos-light: #F0F8FF;
+            --amigos-teal: #2DD4BF;
+            --amigos-orange: #F59E0B;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--amigos-dark);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--amigos-light);
+            padding: 1rem;
+        }
+        
+        .amigos-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        /* Header - Mobile Optimized */
+        .amigos-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .header-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--amigos-purple), var(--amigos-pink));
+            padding: 5px;
+            display: block;
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
+        }
+        
+        .header-logo img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .amigos-title {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--amigos-pink), var(--amigos-blue), var(--amigos-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+            animation: glow 3s ease-in-out infinite alternate;
+            line-height: 1.2;
+        }
+        
+        @keyframes glow {
+            0% { text-shadow: 0 0 20px rgba(236, 72, 153, 0.5); }
+            100% { text-shadow: 0 0 30px rgba(6, 182, 212, 0.7), 0 0 40px rgba(139, 92, 246, 0.5); }
+        }
+        
+        .user-welcome {
+            font-size: clamp(1rem, 4vw, 1.4rem);
+            color: var(--amigos-light);
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        
+        .amigos-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 0.8rem 1.2rem;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            margin-top: 1rem;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        /* Countdown - Mobile Optimized */
+        .amigos-countdown {
+            background: linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.7));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 0 50px rgba(139, 92, 246, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .countdown-title {
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--amigos-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.3;
+        }
+        
+        .amigos-timer {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        @media (min-width: 768px) {
+            .amigos-timer {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1.5rem;
+            }
+        }
+        
+        .time-unit {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 15px;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .time-unit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(6, 182, 212, 0.3);
+            border-color: var(--amigos-blue);
+        }
+        
+        .time-value {
+            font-size: clamp(1.8rem, 8vw, 3.5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--amigos-blue), var(--amigos-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+        
+        .time-label {
+            font-size: clamp(0.7rem, 3vw, 0.9rem);
+            color: var(--amigos-light);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Body Image */
+        .body-image {
+            width: 200px;
+            height: 200px;
+            margin: 2rem auto;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--amigos-blue), var(--amigos-teal));
+            padding: 8px;
+            display: block;
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+        }
+        
+        .body-image img {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+            object-fit: cover;
+        }
+        
+        @media (max-width: 768px) {
+            .body-image {
+                width: 150px;
+                height: 150px;
+                margin: 1.5rem auto;
+            }
+        }
+        
+        /* Assignment - Mobile Optimized */
+        .amigos-assignment {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            backdrop-filter: blur(20px);
+            text-align: center;
+            position: relative;
+        }
+        
+        .assignment-text {
+            font-size: clamp(1rem, 4vw, 1.4rem);
+            color: var(--amigos-light);
+            line-height: 1.4;
+        }
+        
+        .partner-name {
+            background: linear-gradient(135deg, var(--amigos-orange), var(--amigos-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            font-size: clamp(1.2rem, 5vw, 1.6rem);
+            display: block;
+            margin-top: 0.5rem;
+        }
+        
+        /* Table - Mobile Optimized */
+        .amigos-table-container {
+            background: linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.7));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            backdrop-filter: blur(20px);
+            overflow-x: auto;
+        }
+        
+        .table-title {
+            font-size: clamp(1.5rem, 6vw, 2rem);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--amigos-teal);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.3;
+        }
+        
+        .amigos-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(15, 15, 35, 0.5);
+            border-radius: 15px;
+            overflow: hidden;
+            min-width: 600px;
+        }
+        
+        .amigos-table th {
+            background: linear-gradient(135deg, var(--amigos-purple), var(--amigos-pink));
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: clamp(0.7rem, 3vw, 0.9rem);
+            white-space: nowrap;
+        }
+        
+        .amigos-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+            transition: all 0.3s ease;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+        }
+        
+        .amigos-table tr:hover td {
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .user-highlight {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2)) !important;
+            position: relative;
+        }
+        
+        .user-highlight::before {
+            content: '🌟';
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem;
+        }
+        
+        .rating-display {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+        
+        .rating-stars {
+            color: var(--amigos-orange);
+            font-size: clamp(0.9rem, 4vw, 1.1rem);
+        }
+        
+        /* Footer - Mobile Optimized */
+        .amigos-footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        .amigos-button {
+            background: linear-gradient(135deg, var(--amigos-purple), var(--amigos-pink));
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            width: fit-content;
+        }
+        
+        .amigos-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Rating Popup - Mobile Optimized */
+        .amigos-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 35, 0.98);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(20px);
+            padding: 1rem;
+        }
+        
+        .popup-content {
+            background: linear-gradient(135deg, rgba(30, 30, 60, 0.95), rgba(15, 15, 35, 0.95));
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 50px rgba(139, 92, 246, 0.3);
+        }
+        
+        .popup-stars {
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .amigos-star {
+            font-size: clamp(2rem, 10vw, 3rem);
+            cursor: pointer;
+            margin: 0 0.2rem;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+            min-width: 40px;
+        }
+        
+        .amigos-star:hover,
+        .amigos-star.active {
+            color: #FFD700;
+            transform: scale(1.2) rotate(15deg);
+            filter: drop-shadow(0 0 20px gold);
+        }
+        
+        /* Mobile-specific improvements */
+        @media (max-width: 480px) {
+            .amigos-container {
+                padding: 0.5rem;
+            }
+            
+            .amigos-countdown {
+                padding: 1rem;
+                margin: 1.5rem 0;
+            }
+            
+            .amigos-table th,
+            .amigos-table td {
+                padding: 0.8rem 0.5rem;
+            }
+            
+            .popup-content {
+                padding: 1.5rem;
+            }
+            
+            .amigos-badge {
+                padding: 0.6rem 1rem;
+            }
+            
+            .header-logo {
+                width: 60px;
+                height: 60px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .amigos-timer {
+                gap: 0.8rem;
+            }
+            
+            .time-unit {
+                padding: 0.8rem 0.3rem;
+            }
+            
+            .amigos-table-container {
+                padding: 1rem;
+                margin: 1.5rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="amigos-container">
+        <!-- Header with Logo -->
+        <div class="amigos-header">
+            <div class="header-logo">
+                <img src="{% static 'images/img.ico' %}" alt="Amigos Logo">
+            </div>
+            <h1 class="amigos-title">AMIGOS CONNECTION</h1>
+            <p class="user-welcome">Welcome back, <strong style="color: var(--amigos-blue);">{{ user.username }}</strong>! 👋</p>
+            <p style="opacity: 0.8; margin-bottom: 1rem; font-size: clamp(0.9rem, 4vw, 1.1rem);">Current Week: <strong>{{ current_interval|date:"F d, Y" }}</strong></p>
+            <div class="amigos-badge">
+                <span>⭐ Your Rating:</span>
+                <strong style="color: var(--amigos-orange);">{{ user.profile.average_rating }}</strong>
+                <span style="opacity: 0.7;">({{ user.profile.total_ratings }} ratings)</span>
+            </div>
+        </div>
+
+        <!-- Countdown -->
+        <div class="amigos-countdown">
+            <div class="countdown-title">⏰ Next Amigos Pairing In</div>
+            <div class="amigos-timer">
+                <div class="time-unit">
+                    <span class="time-value" id="amigos-days">00</span>
+                    <span class="time-label">Days</span>
+                </div>
+                <div class="time-unit">
+                    <span class="time-value" id="amigos-hours">00</span>
+                    <span class="time-label">Hours</span>
+                </div>
+                <div class="time-unit">
+                    <span class="time-value" id="amigos-minutes">00</span>
+                    <span class="time-label">Minutes</span>
+                </div>
+                <div class="time-unit">
+                    <span class="time-value" id="amigos-seconds">00</span>
+                    <span class="time-label">Seconds</span>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 1.5rem; opacity: 0.7; font-size: clamp(0.8rem, 3vw, 1rem);">
+                Next rotation: <strong>{{ next_week }}</strong> at 00:00
+            </p>
+        </div>
+
+        <!-- Body Image -->
+        <div class="body-image">
+            <img src="{% static 'images/img.png' %}" alt="Amigos Community">
+        </div>
+
+        <!-- Assignment -->
+        {% if user_assignment %}
+        <div class="amigos-assignment">
+            <p class="assignment-text">
+                🎯 <strong>Your Amigos Partner This Week:</strong>
+                <span class="partner-name">{{ user_assignment.assigned_to.username }}</span>
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Table -->
+        <div class="amigos-table-container">
+            <h2 class="table-title">📊 All Amigos Pairings</h2>
+            <div style="overflow-x: auto;">
+                <table class="amigos-table">
+                    <thead>
+                        <tr>
+                            <th>👤 Amigos Member</th>
+                            <th>🎯 Paired With</th>
+                            <th>⭐ Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in all_assignments %}
+                        <tr {% if assignment.user == user %}class="user-highlight"{% endif %}>
+                            <td>
+                                {{ assignment.user.username }}
+                            </td>
+                            <td>{{ assignment.assigned_to.username }}</td>
+                            <td>
+                                <div class="rating-display">
+                                    <span class="rating-stars">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= assignment.user.profile.average_rating %}
+                                                ⭐
+                                            {% else %}
+                                                ☆
+                                            {% endif %}
+                                        {% endfor %}
+                                    </span>
+                                    <span style="opacity: 0.7; font-size: clamp(0.7rem, 3vw, 0.9rem);">
+                                        ({{ assignment.user.profile.total_ratings }})
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="amigos-footer">
+            <a href="{% url 'login' %}" class="amigos-button">
+                🚪 Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Rating Popup -->
+    {% if unrated_vote %}
+    <div class="amigos-popup" id="amigosPopup">
+        <div class="popup-content">
+            <h2 style="color: var(--amigos-blue); margin-bottom: 1rem; font-size: clamp(1.5rem, 6vw, 2rem);">⭐ Rate Your Amigos Partner</h2>
+            <p style="opacity: 0.9; margin-bottom: 1.5rem; font-size: clamp(0.9rem, 4vw, 1.1rem); line-height: 1.4;">
+                How was your experience with<br>
+                <strong style="color: var(--amigos-pink); font-size: clamp(1.1rem, 5vw, 1.3rem);">{{ unrated_vote.voter.username }}</strong>
+            </p>
+            <div class="popup-stars" id="amigosStars">
+                <span class="amigos-star" data-rating="1">☆</span>
+                <span class="amigos-star" data-rating="2">☆</span>
+                <span class="amigos-star" data-rating="3">☆</span>
+                <span class="amigos-star" data-rating="4">☆</span>
+                <span class="amigos-star" data-rating="5">☆</span>
+            </div>
+            <div style="margin: 1.5rem 0; color: var(--amigos-light); opacity: 0.8; font-size: clamp(0.9rem, 4vw, 1.1rem);">
+                Selected: <strong id="amigosRatingText" style="color: var(--amigos-orange);">0 stars</strong>
+            </div>
+            <input type="hidden" id="amigosRating" value="0">
+            <input type="hidden" id="amigosVoteId" value="{{ unrated_vote.id }}">
+            <button class="amigos-button" onclick="submitAmigosRating()" style="font-size: clamp(0.9rem, 4vw, 1.1rem); padding: 1rem 2rem;">
+                ⭐ Submit Rating
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        // Countdown
+        function updateAmigosCountdown() {
+            const now = new Date();
+            const nextMonday = new Date(now);
+            nextMonday.setDate(now.getDate() + (7 - now.getDay()) % 7);
+            nextMonday.setHours(0, 0, 0, 0);
+            
+            const diff = nextMonday - now;
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('amigos-days').textContent = days.toString().padStart(2, '0');
+            document.getElementById('amigos-hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('amigos-minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('amigos-seconds').textContent = seconds.toString().padStart(2, '0');
+        }
+        
+        // Rating System
+        const amigosStars = document.querySelectorAll('.amigos-star');
+        amigosStars.forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = this.getAttribute('data-rating');
+                document.getElementById('amigosRating').value = rating;
+                document.getElementById('amigosRatingText').textContent = 
+                    rating + ' star' + (rating > 1 ? 's' : '');
+                
+                amigosStars.forEach(s => {
+                    s.textContent = '☆';
+                    s.classList.remove('active');
+                });
+                
+                for (let i = 0; i < rating; i++) {
+                    amigosStars[i].textContent = '⭐';
+                    amigosStars[i].classList.add('active');
+                }
+            });
+        });
+
+        function submitAmigosRating() {
+            const rating = document.getElementById('amigosRating').value;
+            const voteId = document.getElementById('amigosVoteId').value;
+            
+            if (rating === '0') {
+                alert('Please select a rating by clicking on the stars!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('vote_id', voteId);
+            formData.append('score', rating);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch('/votes/submit_rating/', {
+                method: 'POST',
+                body: formData,
+                headers: {'X-Requested-With': 'XMLHttpRequest'}
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('amigosPopup').style.display = 'none';
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(() => alert('Error submitting rating'));
+        }
+
+        // Initialize countdown
+        updateAmigosCountdown();
+        setInterval(updateAmigosCountdown, 1000);
+        setInterval(() => location.reload(), 60000);
+    </script>
+</body>
+</html>

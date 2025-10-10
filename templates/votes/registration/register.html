@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Join Amigos Squad - Weekly Pairing System</title>
+    {% load static %}
+    <link rel="icon" href="{% static 'images/img.ico' %}" type="image/x-icon">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --cosmic-purple: #8B5CF6;
+            --neon-pink: #EC4899;
+            --electric-blue: #06B6D4;
+            --galaxy-black: #0F0F23;
+            --starlight-white: #F0F8FF;
+            --nebula-teal: #2DD4BF;
+            --supernova-orange: #F59E0B;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--galaxy-black);
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            overflow-x: hidden;
+        }
+        
+        .cosmic-container {
+            max-width: 450px;
+            width: 100%;
+            padding: 2rem;
+        }
+        
+        /* Galactic Header - Mobile Optimized */
+        .galactic-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .logo {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 1rem;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .cosmic-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-pink), var(--electric-blue), var(--cosmic-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+            animation: cosmicGlow 3s ease-in-out infinite alternate;
+            line-height: 1.2;
+        }
+        
+        @keyframes cosmicGlow {
+            0% { text-shadow: 0 0 20px rgba(236, 72, 153, 0.5); }
+            100% { text-shadow: 0 0 30px rgba(6, 182, 212, 0.7), 0 0 40px rgba(139, 92, 246, 0.5); }
+        }
+        
+        .user-welcome {
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            color: var(--starlight-white);
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+        
+        /* Quantum Form - Mobile Optimized */
+        .quantum-form {
+            background: linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.7));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 25px;
+            padding: 2.5rem;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 0 50px rgba(139, 92, 246, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin-bottom: 1.8rem;
+            position: relative;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.8rem;
+            font-weight: 500;
+            color: var(--electric-blue);
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .input-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(6, 182, 212, 0.3);
+            border-radius: 15px;
+            padding: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+        
+        .input-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .input-container:focus-within::before {
+            left: 100%;
+        }
+        
+        .input-container:focus-within {
+            border-color: var(--electric-blue);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .pretty-input {
+            width: 100%;
+            padding: 1.3rem 1.5rem 1.3rem 1.2rem;
+            background: transparent;
+            border: none;
+            color: var(--starlight-white);
+            font-size: 1rem;
+            outline: none;
+            border-radius: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .pretty-input::placeholder {
+            color: rgba(240, 248, 255, 0.5);
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--amigos-blue);
+            font-size: 1.2rem;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+        
+        .input-container:focus-within .input-icon {
+            opacity: 1;
+            color: var(--electric-blue);
+        }
+        
+        .cosmic-button {
+            width: 100%;
+            padding: 1.3rem;
+            background: linear-gradient(135deg, var(--cosmic-purple), var(--neon-pink));
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cosmic-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .cosmic-button:hover::before {
+            left: 100%;
+        }
+        
+        .cosmic-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(139, 92, 246, 0.4);
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        .login-link p {
+            color: var(--starlight-white);
+            opacity: 0.8;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .login-button {
+            background: linear-gradient(135deg, var(--electric-blue), var(--nebula-teal));
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .login-button:hover::before {
+            left: 100%;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.4);
+        }
+        
+        .error {
+            color: var(--supernova-orange);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            padding: 1rem;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border-left: 4px solid var(--supernova-orange);
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .message {
+            padding: 1.2rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid;
+            font-weight: 500;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .success {
+            background: rgba(45, 212, 191, 0.15);
+            border-color: rgba(45, 212, 191, 0.3);
+            color: var(--nebula-teal);
+        }
+        
+        /* Floating Particles - Mobile Optimized */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: -1;
+            font-size: clamp(10px, 4vw, 20px);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(50px, -50px) rotate(90deg); }
+            50% { transform: translate(0, -100px) rotate(180deg); }
+            75% { transform: translate(-50px, -50px) rotate(270deg); }
+        }
+        
+        /* Mobile-specific improvements */
+        @media (max-width: 480px) {
+            body { padding: 0.5rem; }
+            .cosmic-container { padding: 1rem; }
+            .quantum-form { padding: 2rem 1.5rem; }
+            .galactic-header { margin-bottom: 1.5rem; }
+        }
+        
+        /* Hide particles on very small screens for performance */
+        @media (max-width: 360px) {
+            .particle { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Particles -->
+    <div id="particles-container"></div>
+
+    <div class="cosmic-container">
+        <!-- Galactic Header -->
+        <div class="galactic-header">
+            <img src="{% static 'images/img.png' %}" alt="Amigos Logo" class="logo">
+            <h1 class="cosmic-title">JOIN AMIGOS SQUAD</h1>
+            <p class="user-welcome">Become part of the cosmic crew! 🎉</p>
+        </div>
+
+        <!-- Quantum Form -->
+        <form method="post" class="quantum-form">
+            {% csrf_token %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            
+            {% for field in form %}
+                <div class="form-group">
+                    <label class="form-label" for="{{ field.id_for_label }}">
+                        {% if field.name == 'username' %}👤 Username
+                        {% elif field.name == 'password1' %}🔒 Password
+                        {% elif field.name == 'password2' %}✅ Confirm Password
+                        {% else %}{{ field.label }}{% endif %}
+                    </label>
+                    <div class="input-container">
+                        {{ field }}
+                        {% if field.name == 'password1' or field.name == 'password2' %}
+                            <span class="input-icon">👁️</span>
+                        {% else %}
+                            <span class="input-icon">
+                                {% if field.name == 'username' %}👤
+                                {% else %}✨{% endif %}
+                            </span>
+                        {% endif %}
+                    </div>
+                    {% if field.errors %}
+                        <div class="error">{{ field.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="cosmic-button">Create Account 🚀</button>
+        </form>
+        
+        <div class="login-link">
+            <p>Already in the squad?</p>
+            <a href="{% url 'login' %}" class="login-button">Sign In Here 👋</a>
+        </div>
+    </div>
+
+    <script>
+        // Create floating particles (reduced for mobile)
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            const colors = ['#8B5CF6', '#EC4899', '#06B6D4', '#2DD4BF', '#F59E0B'];
+            const particleCount = window.innerWidth < 768 ? 8 : 15;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.innerHTML = '✦';
+                particle.style.color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.fontSize = (Math.random() * 15 + 8) + 'px';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.top = Math.random() * 100 + 'vh';
+                particle.style.animation = `float ${Math.random() * 15 + 8}s linear infinite`;
+                particle.style.opacity = Math.random() * 0.3 + 0.1;
+                container.appendChild(particle);
+            }
+        }
+
+        // Add pretty styling to form inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+            inputs.forEach(input => {
+                input.classList.add('pretty-input');
+                if (!input.placeholder) {
+                    input.placeholder = 'Enter your ' + input.name.replace(/1|2/, '').replace('password', 'password');
+                }
+            });
+        });
+
+        // Password toggle functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('input-icon') && (e.target.textContent === '👁️' || e.target.textContent === '🙈')) {
+                const input = e.target.parentElement.querySelector('input');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    e.target.textContent = '🙈';
+                } else {
+                    input.type = 'password';
+                    e.target.textContent = '👁️';
+                }
+            }
+        });
+
+        // Initialize particles
+        createParticles();
+    </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>===== Voting - {{ current_month }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 20px; }
+        .vote-section, .results-section { margin: 30px 0; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, textarea, button { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        button { background: #4CAF50; color: white; border: none; cursor: pointer; font-size: 16px; padding: 12px; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        button:hover:not(:disabled) { background: #45a049; }
+        .vote-count { display: inline-block; background: #4CAF50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 10px; }
+        .user-item { padding: 10px; margin: 5px 0; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #4CAF50; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .refresh-btn { background: #2196F3; width: auto; padding: 8px 15px; font-size: 14px; }
+        .refresh-btn:hover { background: #1976D2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ ==== Voting System</h1>
+            <p>Welcome, {{ user.username }}! 🎉</p>
+            <p><strong>Current Month:</strong> {{ current_month }}</p>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="vote-section">
+            <h2>🗳️ Cast Your Vote</h2>
+            {% if has_voted %}
+                <div class="message success">✅ You've already voted this month! Your vote has been recorded.</div>
+            {% else %}
+                <form id="voteForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="recipient">Choose who you're voting for:</label>
+                        <select name="recipient" id="recipient" required>
+                            <option value="">Select a user...</option>
+                            {% for other_user in users %}
+                                <option value="{{ other_user.id }}">{{ other_user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="note">Add a note (optional):</label>
+                        <textarea name="note" id="note" placeholder="Why did you vote for them?" rows="3" maxlength="200"></textarea>
+                    </div>
+                    
+                    <button type="submit" id="submitVote">Submit Vote 🚀</button>
+                </form>
+            {% endif %}
+        </div>
+
+        <div class="results-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>📊 All Users & Votes</h2>
+                <button class="refresh-btn" onclick="refreshVotes()">🔄 Refresh</button>
+            </div>
+            <div id="resultsContainer">
+                {% for user in users %}
+                    <div class="user-item">
+                        {{ user.username }}
+                        {% for vote in monthly_votes %}
+                            {% if vote.recipient__username == user.username %}
+                                <span class="vote-count">{{ vote.vote_count }} vote{{ vote.vote_count|pluralize }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% empty %}
+                    <p>No users found!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'logout' %}">Logout</a> | 
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a> | 
+                    <a href="{% url 'register' %}">Register</a> | 
+                {% endif %}
+                <a href="/admin/">Admin</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('voteForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const submitBtn = document.getElementById('submitVote');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            fetch('/votes/cast_vote/', {
+                method: 'POST',
+                body: formData,
+                headers: {'X-Requested-With': 'XMLHttpRequest'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    window.location.reload();
+                } else {
+                    alert('❌ ' + data.error);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Vote 🚀';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Something went wrong!');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Vote 🚀';
+            });
+        });
+
+        function refreshVotes() {
+            const refreshBtn = document.querySelector('.refresh-btn');
+            refreshBtn.textContent = 'Refreshing...';
+            fetch('/votes/get_votes/')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('resultsContainer');
+                    container.innerHTML = '';
+                    if (data.votes.length > 0) {
+                        data.votes.forEach(vote => {
+                            const div = document.createElement('div');
+                            div.className = 'user-item';
+                            div.innerHTML = `${vote.username} <span class="vote-count">${vote.count} vote${vote.count !== 1 ? 's' : ''}</span>`;
+                            container.appendChild(div);
+                        });
+                    } else {
+                        container.innerHTML = '<p>No votes yet this month.</p>';
+                    }
+                    refreshBtn.textContent = '🔄 Refresh';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    refreshBtn.textContent = '🔄 Refresh';
+                    alert('Error refreshing votes');
+                });
+        }
+        setInterval(refreshVotes, 30000);
+    </script>
+</body>
+</html>
