@@ -590,6 +590,17 @@
     </div>
     {% endif %}
 
+    {% if user.is_superuser %}
+<div style="text-align: center; margin: 10px 0;">
+    <form method="post" action="{% url 'refresh_assignments' %}">
+        {% csrf_token %}
+        <button type="submit" style="background: #ff6b6b; color: white; border: none; padding: 8px 15px; border-radius: 5px;">
+            🔄 Refresh All Assignments
+        </button>
+    </form>
+</div>
+{% endif %}
+
     <script>
         // Countdown
         function updateAmigosCountdown() {

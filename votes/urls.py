@@ -15,4 +15,6 @@ urlpatterns = [
     ), name='logout'),
     path('votes/get_assignments/', views.get_assignments, name='get_assignments'),
     path('votes/submit_rating/', views.submit_rating, name='submit_rating'),
+    path('refresh-assignments/', views.refresh_assignments, name='refresh_assignments'),
+
 ]

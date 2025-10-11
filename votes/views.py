@@ -23,7 +23,6 @@ def register(request):
     else:
         form = UserCreationForm()
     return render(request, 'votes/registration/register.html', {'form': form})
-
 @login_required
 def index(request):
     user = request.user
@@ -38,27 +37,60 @@ def index(request):
         if not hasattr(user_obj, 'profile'):
             Profile.objects.create(user=user_obj)
 
-    # Auto-create assignments for current week (using hour_interval field)
-    if not Assignment.objects.filter(hour_interval=current_week, is_active=True).exists():
+    # FIXED: Check if ALL users have assignments for current week
+    users_with_assignments = Assignment.objects.filter(
+        hour_interval=current_week, 
+        is_active=True
+    ).values_list('user_id', flat=True)
+    
+    users_without_assignments = all_users.exclude(id__in=users_with_assignments)
+    
+    # If ANY user is missing assignment, recreate ALL assignments for the week
+    if users_without_assignments.exists() or Assignment.objects.filter(hour_interval=current_week).count() != all_users.count():
+        # Delete existing assignments for this week
+        Assignment.objects.filter(hour_interval=current_week).delete()
+        Vote.objects.filter(hour_interval=current_week).delete()
+        
+        # Create new assignments for ALL users
         users_list = list(all_users)
         
         if len(users_list) > 1:
+            # Create a circular assignment (user1->user2, user2->user3, ..., last->user1)
             random.shuffle(users_list)
+            
             for i, assigner in enumerate(users_list):
                 assignee = users_list[(i + 1) % len(users_list)]
-                if assignee != assigner:
-                    assignment = Assignment.objects.create(
-                        user=assigner,
-                        assigned_to=assignee,
-                        hour_interval=current_week,  # Use hour_interval field
-                        is_active=True
-                    )
-                    Vote.objects.create(
-                        voter=assigner,
-                        recipient=assignee,
-                        assignment=assignment,
-                        hour_interval=current_week  # Use hour_interval field
-                    )
+                
+                # Create assignment
+                assignment = Assignment.objects.create(
+                    user=assigner,
+                    assigned_to=assignee,
+                    hour_interval=current_week,
+                    is_active=True
+                )
+                
+                # Create corresponding vote
+                Vote.objects.create(
+                    voter=assigner,
+                    recipient=assignee,
+                    assignment=assignment,
+                    hour_interval=current_week
+                )
+        elif len(users_list) == 1:
+            # Only one user - assign to themselves or handle differently
+            single_user = users_list[0]
+            assignment = Assignment.objects.create(
+                user=single_user,
+                assigned_to=single_user,
+                hour_interval=current_week,
+                is_active=True
+            )
+            Vote.objects.create(
+                voter=single_user,
+                recipient=single_user,
+                assignment=assignment,
+                hour_interval=current_week
+            )
 
     # Get ALL current assignments
     all_assignments = Assignment.objects.filter(hour_interval=current_week, is_active=True).select_related('user', 'assigned_to')
@@ -89,8 +121,10 @@ def index(request):
         'hours_remaining': int((time_remaining.total_seconds() % 86400) // 3600),
         'next_week': next_week.strftime('%Y-%m-%d'),
         'user': user,
+        'total_users': all_users.count(),
     }
     return render(request, 'votes/index.html', context)
+
 
 @login_required
 def submit_rating(request):
@@ -139,3 +173,65 @@ def get_assignments(request):
         'days_remaining': int(time_remaining.total_seconds() // 86400),
         'hours_remaining': int((time_remaining.total_seconds() % 86400) // 3600)
     })
+@login_required
+def refresh_assignments(request):
+    if request.method == 'POST' and request.user.is_superuser:
+        result = recreate_weekly_assignments()
+        messages.success(request, result)
+    else:
+        messages.error(request, "Only admin can refresh assignments")
+    return redirect('index')
+def recreate_weekly_assignments():
+    """Recreate assignments for all users for current week"""
+    now = timezone.now()
+    current_week = now - timedelta(days=now.weekday())
+    current_week = current_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    all_users = list(User.objects.all())
+    
+    # Delete existing assignments for this week
+    Assignment.objects.filter(hour_interval=current_week).delete()
+    Vote.objects.filter(hour_interval=current_week).delete()
+    
+    if len(all_users) < 2:
+        return "Need at least 2 users for assignments"
+    
+    # Create circular assignments
+    random.shuffle(all_users)
+    
+    for i, assigner in enumerate(all_users):
+        assignee = all_users[(i + 1) % len(all_users)]
+        
+        assignment = Assignment.objects.create(
+            user=assigner,
+            assigned_to=assignee,
+            hour_interval=current_week,
+            is_active=True
+        )
+        
+        Vote.objects.create(
+            voter=assigner,
+            recipient=assignee,
+            assignment=assignment,
+            hour_interval=current_week
+        )
+    
+    return f"Created assignments for {len(all_users)} users"
+
+# Add this to your register view to auto-refresh when new users join
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
+            
+            # Auto-refresh assignments when new user registers
+            if User.objects.count() > 1:
+                recreate_weekly_assignments()
+            
+            messages.success(request, f'Account created for {username}! Assignments updated!')
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+    return render(request, 'votes/registration/register.html', {'form': form})
