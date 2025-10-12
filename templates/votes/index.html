@@ -476,24 +476,24 @@
             <div class="countdown-title">⏰ Next Amigos Pairing In</div>
             <div class="amigos-timer">
                 <div class="time-unit">
-                    <span class="time-value" id="amigos-days">00</span>
+                    <span class="time-value" id="amigos-days">{{ days_remaining|default:"00" }}</span>
                     <span class="time-label">Days</span>
                 </div>
                 <div class="time-unit">
-                    <span class="time-value" id="amigos-hours">00</span>
+                    <span class="time-value" id="amigos-hours">{{ hours_remaining|default:"00" }}</span>
                     <span class="time-label">Hours</span>
                 </div>
                 <div class="time-unit">
-                    <span class="time-value" id="amigos-minutes">00</span>
+                    <span class="time-value" id="amigos-minutes">{{ minutes_remaining|default:"00" }}</span>
                     <span class="time-label">Minutes</span>
                 </div>
                 <div class="time-unit">
-                    <span class="time-value" id="amigos-seconds">00</span>
+                    <span class="time-value" id="amigos-seconds">{{ seconds_remaining|default:"00" }}</span>
                     <span class="time-label">Seconds</span>
                 </div>
             </div>
             <p style="text-align: center; margin-top: 1.5rem; opacity: 0.7; font-size: clamp(0.8rem, 3vw, 1rem);">
-                Next rotation: <strong>{{ next_week }}</strong> at 00:00
+                Next rotation: <strong>{{ next_interval }}</strong> at 8:00 PM
             </p>
         </div>
 
@@ -602,14 +602,21 @@
 {% endif %}
 
     <script>
-        // Countdown
+        // Countdown to next Saturday at 8:00 PM
         function updateAmigosCountdown() {
             const now = new Date();
-            const nextMonday = new Date(now);
-            nextMonday.setDate(now.getDate() + (7 - now.getDay()) % 7);
-            nextMonday.setHours(0, 0, 0, 0);
             
-            const diff = nextMonday - now;
+            // Calculate next Saturday
+            const nextSaturday = new Date(now.getTime());
+            nextSaturday.setDate(now.getDate() + ((6 + 7 - now.getDay()) % 7));
+            nextSaturday.setHours(20, 0, 0, 0); // 8:00 PM
+            
+            // If past 8:00 PM on Saturday, go to next week
+            if (now >= nextSaturday) {
+                nextSaturday.setDate(nextSaturday.getDate() + 7);
+            }
+            
+            const diff = nextSaturday - now;
             
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));

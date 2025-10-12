@@ -27,9 +27,16 @@ def register(request):
 def index(request):
     user = request.user
     now = timezone.now()
-    # Start of current week (Monday)
-    current_week = now - timedelta(days=now.weekday())
-    current_week = current_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Calculate start of current weekly period (Saturday at 20:00)
+    delta_days = (now.weekday() - 5) % 7  # 5 = Saturday
+    last_saturday = now - timedelta(days=delta_days)
+    last_sat_20 = last_saturday.replace(hour=20, minute=0, second=0, microsecond=0)
+    
+    if now < last_sat_20:
+        current_interval = last_sat_20 - timedelta(days=7)
+    else:
+        current_interval = last_sat_20
 
     # Ensure ALL users have profiles
     all_users = User.objects.all()
@@ -37,27 +44,27 @@ def index(request):
         if not hasattr(user_obj, 'profile'):
             Profile.objects.create(user=user_obj)
 
-    # FIXED: Check if ALL users have assignments for current week
+    # Check if ALL users have assignments for current weekly interval
     users_with_assignments = Assignment.objects.filter(
-        hour_interval=current_week, 
+        hour_interval=current_interval, 
         is_active=True
     ).values_list('user_id', flat=True)
     
     users_without_assignments = all_users.exclude(id__in=users_with_assignments)
     
-    # If ANY user is missing assignment, recreate ALL assignments for the week
-    if users_without_assignments.exists() or Assignment.objects.filter(hour_interval=current_week).count() != all_users.count():
-        # Delete existing assignments for this week
-        Assignment.objects.filter(hour_interval=current_week).delete()
-        Vote.objects.filter(hour_interval=current_week).delete()
+    # If ANY user is missing assignment, recreate ALL assignments for the interval
+    if users_without_assignments.exists() or Assignment.objects.filter(hour_interval=current_interval).count() != all_users.count():
+        # Delete existing assignments for this interval
+        Assignment.objects.filter(hour_interval=current_interval).delete()
+        Vote.objects.filter(hour_interval=current_interval).delete()
         
         # Create new assignments for ALL users
         users_list = list(all_users)
+        import random
+        random.shuffle(users_list)
         
         if len(users_list) > 1:
             # Create a circular assignment (user1->user2, user2->user3, ..., last->user1)
-            random.shuffle(users_list)
-            
             for i, assigner in enumerate(users_list):
                 assignee = users_list[(i + 1) % len(users_list)]
                 
@@ -65,7 +72,7 @@ def index(request):
                 assignment = Assignment.objects.create(
                     user=assigner,
                     assigned_to=assignee,
-                    hour_interval=current_week,
+                    hour_interval=current_interval,
                     is_active=True
                 )
                 
@@ -74,56 +81,67 @@ def index(request):
                     voter=assigner,
                     recipient=assignee,
                     assignment=assignment,
-                    hour_interval=current_week
+                    hour_interval=current_interval
                 )
         elif len(users_list) == 1:
-            # Only one user - assign to themselves or handle differently
+            # Only one user - assign to themselves
             single_user = users_list[0]
             assignment = Assignment.objects.create(
                 user=single_user,
                 assigned_to=single_user,
-                hour_interval=current_week,
+                hour_interval=current_interval,
                 is_active=True
             )
             Vote.objects.create(
                 voter=single_user,
                 recipient=single_user,
                 assignment=assignment,
-                hour_interval=current_week
+                hour_interval=current_interval
             )
 
     # Get ALL current assignments
-    all_assignments = Assignment.objects.filter(hour_interval=current_week, is_active=True).select_related('user', 'assigned_to')
+    all_assignments = Assignment.objects.filter(hour_interval=current_interval, is_active=True).select_related('user', 'assigned_to')
     
     # User's current assignment
     user_assignment = all_assignments.filter(user=user).first()
 
-    # Check for unrated votes (people who voted for user in previous weeks)
+    # Check for unrated votes (people who voted for user in previous intervals)
     previous_votes = Vote.objects.filter(
         recipient=user,
-        hour_interval__lt=current_week
+        hour_interval__lt=current_interval
     ).exclude(
         ratings__rater=user
     ).select_related('voter').order_by('-hour_interval')
 
     unrated_vote = previous_votes.first() if previous_votes.exists() else None
 
-    # Calculate next week
-    next_week = current_week + timedelta(days=7)
-    time_remaining = next_week - now
+    # Calculate next weekly interval (next Saturday 20:00)
+    next_interval = current_interval + timedelta(days=7)
+    time_remaining = next_interval - now
+    
+    # Calculate countdown components
+    total_seconds = int(time_remaining.total_seconds())
+    days = total_seconds // 86400
+    hours = (total_seconds % 86400) // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
 
     context = {
         'all_assignments': all_assignments,
         'user_assignment': user_assignment,
-        'current_interval': current_week,
+        'current_interval': current_interval,
         'unrated_vote': unrated_vote,
-        'days_remaining': int(time_remaining.total_seconds() // 86400),
-        'hours_remaining': int((time_remaining.total_seconds() % 86400) // 3600),
-        'next_week': next_week.strftime('%Y-%m-%d'),
+        'days_remaining': days,
+        'hours_remaining': hours,
+        'minutes_remaining': minutes,
+        'seconds_remaining': seconds,
+        'next_interval': next_interval.strftime('%Y-%m-%d'),
         'user': user,
         'total_users': all_users.count(),
     }
     return render(request, 'votes/index.html', context)
+
+
 
 
 @login_required
