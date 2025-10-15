@@ -1,3 +1,5 @@
+
+
 """
 Django settings for amiga project.
 
@@ -144,22 +146,21 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Authentication settings
-LOGIN_REDIRECT_URL = '/votes/'  # Where to redirect after login
-LOGOUT_REDIRECT_URL = '/accounts/login/'  # Where to redirect after logout
-LOGIN_URL = '/accounts/login/'  # Where to redirect for login
+# ==============================
+# Environment-based Database Setup
+# ==============================
+from decouple import config
+import dj_database_url
 
-# Logging for production (optional, but useful for debugging on Railway)
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
-    },
+ENVIRONMENT = config('ENVIRONMENT', default='development')
+POSTGRES_LOCALLY = False  # Set True only if testing Postgres locally
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+
+if ENVIRONMENT == 'production' or POSTGRES_LOCALLY:
+    DATABASES['default'] = dj_database_url.parse(config('DATABASE_URL'))
