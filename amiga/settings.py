@@ -54,7 +54,9 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
-CSRF_TRUSTED_ORIGINS = ['https:purple-field-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = [
+    'https://purple-field-production.up.railway.app',
+]
 
 ROOT_URLCONF = 'amiga.urls'
 
