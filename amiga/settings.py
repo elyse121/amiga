@@ -9,9 +9,8 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+
 import os
-
-
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,10 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-z-@op=+vk8c0bmm20@8&2^ke0p^c9@u#zb9@&n#18*@*-5wf4p'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False  # Set to False for production on Railway
 
-ALLOWED_HOSTS = ['amiga-production.up.railway.app']
-
+ALLOWED_HOSTS = [
+    'purple-field-production.up.railway.app',  # Use your actual Railway domain
+    '127.0.0.1',
+    'localhost',
+]
 
 
 # Application definition
@@ -45,17 +47,17 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For serving static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://purple-field-production.up.railway.app',
+    'https://purple-field-production.up.railway.app',  # Full scheme with // for your Railway domain
 ]
 
 ROOT_URLCONF = 'amiga.urls'
@@ -63,11 +65,11 @@ ROOT_URLCONF = 'amiga.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # ADD THIS LINE
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.debug',  # ADD THIS BACK
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -82,10 +84,16 @@ WSGI_APPLICATION = 'amiga.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# For production on Railway, consider switching to PostgreSQL via DATABASE_URL env var
+# But keeping SQLite for now; ensure db.sqlite3 is in your repo or handled via volumes
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            # Optimize SQLite for concurrency (helps on Railway)
+            'timeout': 20,
+        },
     }
 }
 
@@ -123,9 +131,13 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = 'static/'
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Collect static files here for production
+
+# Configure WhiteNoise for production static serving
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -136,30 +148,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/votes/'  # Where to redirect after login
 LOGOUT_REDIRECT_URL = '/accounts/login/'  # Where to redirect after logout
 LOGIN_URL = '/accounts/login/'  # Where to redirect for login
-import os
-from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Add this to your TEMPLATES
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # This line should exist
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
+# Logging for production (optional, but useful for debugging on Railway)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
         },
     },
-]
-
-# Add these static file settings
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # This tells Django where your static files are
-]
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
