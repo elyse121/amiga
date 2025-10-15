@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-z-@op=+vk8c0bmm20@8&2^ke0p^c9@u#zb9@&n#18*@*-5wf4p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['amiga-production.up.railway.app']
 
 
 
@@ -53,6 +53,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
+
+CSRF_TRUSTED_ORIGINS = ['https:purple-field-production.up.railway.app']
 
 ROOT_URLCONF = 'amiga.urls'
 
