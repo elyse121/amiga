@@ -1,58 +1,63 @@
 """
-Django settings for chat_app project.
-Production version for Render
+Django settings for amiga project.
+Works locally (SQLite) and on Render / Railway (PostgreSQL).
 """
 
-from pathlib import Path
-from django.contrib.messages import constants as messages
 import os
+from pathlib import Path
 
-# Try to import dj-database-url, but provide fallback if not available
+# ------------------------------------------------------------
+# Optional: python-decouple with graceful fallback
+# ------------------------------------------------------------
 try:
-    import dj_database_url
-except ImportError:
-    dj_database_url = None
-    print("⚠️ dj-database-url not installed, using SQLite fallback")
+    from decouple import config
+except ImportError:                     # decouple not installed → use os.environ
+    def config(key, default=None, cast=None):
+        value = os.getenv(key, default)
+        if cast is bool:
+            return str(value).lower() in ("true", "1", "yes", "on")
+        if cast is int:
+            return int(value) if value else default
+        return value
 
-# ------------------- Messages -------------------
-MESSAGE_TAGS = {
-    messages.DEBUG: 'alert-info',
-    messages.INFO: 'alert-info',
-    messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-warning',
-    messages.ERROR: 'alert-danger',
-}
-
-# ------------------- Auth Redirects -------------------
-LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = 'login'
-LOGOUT_REDIRECT_URL = '/'
-
-# ------------------- Base Path -------------------
+# ------------------------------------------------------------
+# Base Directory
+# ------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ------------------- Security -------------------
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-for-dev')
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'  # Default to True for local
-ALLOWED_HOSTS = ['*']  # Or your specific Render domain
 
-# ------------------- Installed Apps -------------------
+# ------------------------------------------------------------
+# Security
+# ------------------------------------------------------------
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key')
+
+DEBUG = config('DEBUG', default=False, cast=bool)
+
+# Allow your domain + local dev + Render/Railway
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='amigos-gh5d.onrender.com,127.0.0.1,localhost'
+).split(',')
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://amigos-gh5d.onrender.com',
+    'https://purple-field-production.up.railway.app',
+]
+
+
+# ------------------------------------------------------------
+# Application Definition
+# ------------------------------------------------------------
 INSTALLED_APPS = [
-    'daphne',
-    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'chat',
-    'users',
-    'dashboard',
-    'mathfilters',
+    'votes',
 ]
 
-# ------------------- Middleware -------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -62,17 +67,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'dashboard.middleware.BanCheckMiddleware',
 ]
 
-# ------------------- URLs -------------------
-ROOT_URLCONF = 'chat_app.urls'
+ROOT_URLCONF = 'amiga.urls'
 
-# ------------------- Templates -------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -85,32 +87,38 @@ TEMPLATES = [
     },
 ]
 
-# ------------------- Channels -------------------
-ASGI_APPLICATION = 'chat_app.asgi.application'
-CHANNEL_LAYERS = {
+WSGI_APPLICATION = 'amiga.wsgi.application'
+
+
+# ------------------------------------------------------------
+# Database Configuration
+# ------------------------------------------------------------
+import dj_database_url
+
+# Default: SQLite (local development)
+DATABASES = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
-# ------------------- Database -------------------
-# Use dj-database-url if available, otherwise fallback to SQLite
-if dj_database_url and os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default='sqlite:///db.sqlite3',
-            conn_max_age=600
-        )
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+# -----------------------------------------------------------------
+# ONLY switch to PostgreSQL when a **valid** DATABASE_URL is provided
+# -----------------------------------------------------------------
+DATABASE_URL = config('DATABASE_URL', default=None)
 
-# ------------------- Password Validators -------------------
+if DATABASE_URL and DATABASE_URL.strip():          # <-- IMPORTANT CHECK
+    DATABASES['default'] = dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True if 'render.com' in DATABASE_URL else False
+    )
+
+
+# ------------------------------------------------------------
+# Password Validation
+# ------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -118,69 +126,34 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ------------------- Internationalization -------------------
+
+# ------------------------------------------------------------
+# Internationalization
+# ------------------------------------------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# ------------------- Static & Media -------------------
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# ------------------------------------------------------------
+# Static Files
+# ------------------------------------------------------------
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# ------------------- Default PK -------------------
+# ------------------------------------------------------------
+# Default Primary Key Field Type
+# ------------------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ------------------- Email Config (PRODUCTION - REAL EMAILS) -------------------
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'elyseniyonzima202@gmail.com'
-EMAIL_HOST_PASSWORD = 'hmpb boix dpkx acvt'  # Your App Password
-DEFAULT_FROM_EMAIL = 'elyseniyonzima202@gmail.com'
 
-# ------------------- Session Security -------------------
-# Auto-adjust based on DEBUG mode
-SESSION_COOKIE_SECURE = not DEBUG  # False locally, True on Render
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SAMESITE = 'Lax'
-
-# ------------------- Security Headers (Production) -------------------
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_BROWSER_XSS_FILTER = True 
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
-
-# ------------------- Logging -------------------
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-        'users': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-    },
-}
+# ------------------------------------------------------------
+# Authentication redirects
+# ------------------------------------------------------------
+LOGIN_REDIRECT_URL = '/votes/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGIN_URL = '/accounts/login/'
